@@ -1,0 +1,292 @@
+---
+title: "Alto Architecture: Electron, React, and gtk-js"
+sidebarTitle: "Architecture"
+description: "Alto combines Electron's main process, a React renderer, and the gtk-js Adwaita component library to deliver a native-feeling desktop UI."
+---
+
+Alto is structured as three cooperating layers: an Electron main process that owns the native window and system integration, a React renderer that builds the visible UI, and the gtk-js library that supplies GTK4/Adwaita-style components and theming so the interface matches the GNOME design language. Each layer has a clearly defined responsibility, and the boundaries between them are enforced through a typed IPC system described in the [IPC System](/contributing/ipc-system) guide.
+
+<Note>
+  Alto is a port of [Celeste](https://github.com/hwittenborn/celeste), a file-sync client written in Rust with a native GTK4/Libadwaita UI. Alto's goal is a full 1:1 UI match of Celeste using Electron + React + gtk-js, initially with a fully interactive mock data layer and no real sync backend.
+</Note>
+
+## Three-Layer Overview
+
+```
+┌─────────────────────────────────────────────────┐
+│  Electron Main Process  (src/main.ts)            │
+│  – BrowserWindow, window state, IPC handlers    │
+├─────────────────────────────────────────────────┤
+│  Preload Script         (src/preload.ts)         │
+│  – contextBridge → window.electronAPI           │
+├─────────────────────────────────────────────────┤
+│  React Renderer         (src/App.tsx, etc.)      │
+│  – gtk-js Adwaita components, mock data store   │
+└─────────────────────────────────────────────────┘
+```
+
+---
+
+## Main Process (`src/main.ts`)
+
+The main process creates a single `BrowserWindow` configured for a frameless, transparent window so that gtk-js can draw its own window chrome, drop shadows, and window decorations:
+
+```typescript
+const mainWindow = new BrowserWindow({
+  width: 800,
+  height: 600,
+  frame: false,
+  transparent: true,
+  webPreferences: {
+    preload: path.join(__dirname, 'preload.js'),
+  },
+});
+```
+
+`frame: false` removes the OS-provided window chrome, and `transparent: true` lets the Electron window background be fully transparent so that the gtk-js shadow allocation renders correctly against the desktop.
+
+### Window State Forwarding
+
+Maximized, fullscreen, and tiled windows should not render drop shadows. The main process listens to Electron window events and forwards a consolidated `noShadow` boolean to the renderer via the `window:state-changed` IPC channel:
+
+```typescript
+const sendState = () => {
+  const noShadow =
+    mainWindow.isMaximized() ||
+    mainWindow.isFullScreen() ||
+    (mainWindow as any).isTiled();
+  mainWindow.webContents.send('window:state-changed', noShadow);
+};
+mainWindow.on('maximize', sendState);
+mainWindow.on('unmaximize', sendState);
+mainWindow.on('enter-full-screen', sendState);
+mainWindow.on('leave-full-screen', sendState);
+(mainWindow as any).on('tiled-state-changed', sendState);
+```
+
+### Window IPC Handlers
+
+The main process registers four fire-and-forget IPC handlers that the renderer triggers from window control buttons:
+
+| Channel | Action |
+|---|---|
+| `window:close` | Closes the window |
+| `window:minimize` | Minimizes the window |
+| `window:toggle-maximized` | Toggles between maximized and normal |
+| `window:set-decoration-insets` | Passes shadow padding values to the OS |
+
+See [IPC System](/contributing/ipc-system) for the full typed channel definitions.
+
+---
+
+## Preload Script (`src/preload.ts`)
+
+The preload script runs in the renderer process's context but has access to Electron APIs. It uses Electron's `contextBridge` to safely expose a controlled `window.electronAPI` surface to the React renderer — no full `ipcRenderer` is exposed:
+
+```typescript
+contextBridge.exposeInMainWorld('electronAPI', {
+  invoke,
+  send,
+  onWindowStateChanged: (callback: (maximized: boolean) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, maximized: boolean) =>
+      callback(maximized);
+    ipcRenderer.on('window:state-changed', handler);
+    return () => ipcRenderer.removeListener('window:state-changed', handler);
+  },
+});
+```
+
+`send` and `invoke` are the typed wrappers from `src/ipc-renderer.ts` — they enforce channel names and parameter types at compile time. `onWindowStateChanged` returns a cleanup function that the renderer calls in a `useEffect` teardown to avoid listener leaks.
+
+---
+
+## React Renderer (`src/App.tsx`)
+
+The renderer is a standard React application. The root `App` component wraps everything in `AdwaitaProvider` (which injects the Adwaita CSS theme) and renders a `GtkWindow` with a full-height layout:
+
+```typescript
+import {
+  AdwaitaProvider,
+  AdwHeaderBar,
+  GtkLabel,
+  GtkWindow,
+  GtkWindowTitle,
+} from '@gtk-js/adwaita';
+```
+
+### Shadow Allocation and Decoration Insets
+
+gtk-js renders drop shadows by adding CSS padding around the window's outermost element (the "shadow allocation" container). The renderer must report this padding to the main process so Electron can tell the OS the exact inset where the actual window content begins — this is what allows the OS window manager to correctly tile and snap the window:
+
+```typescript
+useEffect(() => {
+  const el = shadowAllocRef.current;
+  if (!el) return;
+
+  const shadowAlloc = el.closest('.gtk-window-shadow-alloc') ?? el.parentElement;
+  if (!shadowAlloc) return;
+
+  const report = () => {
+    const style = getComputedStyle(shadowAlloc);
+    const top    = parseFloat(style.paddingTop)    || 0;
+    const right  = parseFloat(style.paddingRight)  || 0;
+    const bottom = parseFloat(style.paddingBottom) || 0;
+    const left   = parseFloat(style.paddingLeft)   || 0;
+    window.electronAPI.send('window:set-decoration-insets', top, right, bottom, left);
+  };
+
+  report();
+  const observer = new MutationObserver(report);
+  observer.observe(shadowAlloc, { attributes: true, attributeFilter: ['style'] });
+  return () => observer.disconnect();
+}, []);
+```
+
+A `MutationObserver` watches the shadow container's `style` attribute so insets are re-reported whenever the shadow changes (e.g., on maximize/restore).
+
+### Window State and Maximized Shadow
+
+The renderer subscribes to `onWindowStateChanged` via `window.electronAPI` and toggles a `maximized` boolean in local state. This is passed to `GtkWindow` so gtk-js can suppress shadow padding when the window is maximized, fullscreen, or tiled:
+
+```typescript
+useEffect(() => {
+  return (window as any).electronAPI.onWindowStateChanged((isMaximized: boolean) => {
+    setMaximized(isMaximized);
+  });
+}, []);
+```
+
+```tsx
+<GtkWindow
+  ref={shadowAllocRef}
+  allocateShadow
+  maximized={maximized}
+  onClose={() => window.electronAPI.send('window:close')}
+  onMinimize={() => window.electronAPI.send('window:minimize')}
+  onMaximize={() => window.electronAPI.send('window:toggle-maximized')}
+>
+```
+
+---
+
+## gtk-js Layer
+
+gtk-js is a React component library that replicates GTK4 and libadwaita widgets using web technologies (HTML/CSS/React). Alto depends on seven packages from the gtk-js monorepo:
+
+| Package | Role |
+|---|---|
+| `@gtk-js/gtk4` | Low-level GTK4 widget wrappers (`GtkLabel`, `GtkWindow`, `GtkSeparator`, etc.) |
+| `@gtk-js/adwaita` | Adwaita/libadwaita components (`AdwHeaderBar`, `AdwWindowTitle`, `AdwLeaflet`, etc.) |
+| `@gtk-js/theme-adwaita` | CSS theme that makes components visually match GNOME's Adwaita style |
+| `@gtk-js/icons-adwaita` | Adwaita icon set |
+| `@gtk-js/icons-gtk4` | GTK4 icon set |
+| `@gtk-js/icon-helpers` | Utilities for rendering icons in components |
+| `@gtk-js/gtk-css` | GTK-compatible CSS utilities |
+
+All packages are consumed from a local clone during development — see [Dev Setup](/contributing/development-setup) for details.
+
+---
+
+## Mock Data Layer (`src/mock/`)
+
+Until Alto has a real sync backend, all cloud storage state is provided by an in-memory mock data layer. The layer is designed so that UI components never reference it directly — they only consume a React context whose shape matches what a real backend provider would expose:
+
+### Domain Types (`src/types.ts`)
+
+```typescript
+type ProviderType =
+  | "dropbox" | "gdrive" | "nextcloud" | "owncloud"
+  | "pcloud"  | "proton-drive" | "webdav";
+
+interface Remote {
+  id: string;
+  name: string;           // user-given name, e.g. "My Google Drive"
+  providerType: ProviderType;
+}
+
+interface SyncDir {
+  id: string;
+  remoteId: string;
+  localPath: string;      // absolute local path, no trailing /
+  remotePath: string;     // remote path, no trailing /
+  status: SyncStatus;
+  errors: SyncError[];
+  exclusions: string[];   // glob patterns
+}
+
+type SyncStatus = "checking" | "syncing" | "synced" | "error" | "disconnected";
+type SyncError  = GeneralError | ConflictError;
+```
+
+### State Management (`src/mock/store.ts`)
+
+The mock store uses `useReducer` with a comprehensive set of actions that mirror the operations a real backend would need to support:
+
+```typescript
+type Action =
+  | { type: "ADD_REMOTE";       remote: Remote }
+  | { type: "DELETE_REMOTE";    remoteId: string }
+  | { type: "ADD_SYNC_DIR";     remoteId: string; localPath: string; remotePath: string }
+  | { type: "DELETE_SYNC_DIR";  syncDirId: string }
+  | { type: "RESOLVE_ERROR";    syncDirId: string; errorIndex: number }
+  | { type: "DISMISS_ERROR";    syncDirId: string; errorIndex: number }
+  | { type: "ADD_EXCLUSION";    syncDirId: string; pattern: string }
+  | { type: "UPDATE_EXCLUSION"; syncDirId: string; index: number; pattern: string }
+  | { type: "REMOVE_EXCLUSION"; syncDirId: string; index: number }
+  | { type: "SET_STATUS";       syncDirId: string; status: SyncStatus };
+```
+
+### Context Interface (`src/mock/provider.tsx`)
+
+The `StoreContext` interface is the stable contract between the data layer and the UI:
+
+```typescript
+interface StoreContext {
+  remotes: Remote[];
+  syncDirs: SyncDir[];
+  dispatch: React.Dispatch<Action>;
+}
+```
+
+When a real SQLite/IPC backend is added, `MockDataProvider` is replaced with a `BackendProvider` that satisfies the same interface — no UI components need to change.
+
+---
+
+## Build Toolchain
+
+Alto uses **Electron Forge** with the **Vite plugin** for all bundling. Three separate Vite configs handle the three Electron entry points:
+
+| Entry | Config | Vite Target |
+|---|---|---|
+| `src/main.ts` | `vite.main.config.ts` | `main` (Node/Electron) |
+| `src/preload.ts` | `vite.preload.config.ts` | `preload` |
+| Renderer (React) | `vite.renderer.config.ts` | Browser + HMR |
+
+Both `vite.main.config.ts` and `vite.renderer.config.ts` define a `@` alias pointing to `src/`, matching the `paths` entry in `tsconfig.json`.
+
+Electron Forge's `FusesPlugin` is used at package time to lock down security-sensitive Electron capabilities (Node integration, cookie encryption, ASAR integrity validation, etc.) before code signing.
+
+---
+
+## Source File Map
+
+```
+src/
+├── main.ts          # Electron main process — BrowserWindow, IPC handlers
+├── preload.ts       # Context bridge — exposes window.electronAPI
+├── renderer.tsx     # React entry point
+├── App.tsx          # Root React component — GtkWindow + shadow logic
+├── ipc-main.ts      # Type-safe ipcMain.on / ipcMain.handle wrappers
+├── ipc-renderer.ts  # Type-safe ipcRenderer.send / ipcRenderer.invoke wrappers
+├── ipc-shared.ts    # Shared channel type definitions
+└── (planned)
+    types.ts         # Domain types (Remote, SyncDir, SyncStatus, SyncError)
+    mock/
+    ├── data.ts      # Initial mock data
+    ├── store.ts     # useReducer store + Action types
+    └── provider.tsx # React context provider
+    components/
+    ├── AppShell.tsx # AdwLeaflet sidebar + content layout
+    ├── Sidebar.tsx  # Sidebar panel
+    └── ContentArea.tsx  # Content panel with GtkStack
+```

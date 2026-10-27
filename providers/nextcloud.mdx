@@ -1,0 +1,56 @@
+---
+title: "Connect Nextcloud or OwnCloud to Alto"
+sidebarTitle: "Nextcloud"
+description: "Add a Nextcloud or OwnCloud server to Alto. Provide your server URL, username, and password to connect your self-hosted cloud storage."
+---
+
+Nextcloud and OwnCloud are leading open-source, self-hosted cloud storage platforms. Alto supports both using the same set of credential fields — your server URL, username, and password. If you run your own Nextcloud or OwnCloud instance, or your organisation provides one, you can add it to Alto and start syncing directories in just a few steps.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+- The full URL of your Nextcloud or OwnCloud server (e.g. `https://cloud.example.com`)
+- A valid username and password for that server
+- Network access to the server from the machine running Alto
+
+## Adding a Nextcloud or OwnCloud Remote
+
+<Steps>
+  <Step title="Open the login dialog">
+    Click the **+** button in the Alto sidebar to open the **Log In** dialog.
+  </Step>
+  <Step title="Select the server type">
+    In the **Server Type** dropdown, select **Nextcloud** if you are connecting to a Nextcloud server, or **OwnCloud** if you are connecting to an OwnCloud server. Both providers use identical credential fields.
+  </Step>
+  <Step title="Enter a display name">
+    Type a display name for this remote in the **Name** field. This name appears in the Alto sidebar and is used to identify the remote throughout the app.
+  </Step>
+  <Step title="Enter your server URL">
+    Type the full URL of your server in the **Server URL** field. Include the scheme and any path prefix required by your installation.
+
+    ```text
+    https://cloud.example.com
+    ```
+
+    If your administrator has configured Nextcloud at a sub-path, include that path:
+
+    ```text
+    https://example.com/nextcloud
+    ```
+  </Step>
+  <Step title="Enter your username and password">
+    Fill in the **Username** and **Password** fields with the credentials you use to log in to your Nextcloud or OwnCloud web interface.
+  </Step>
+  <Step title="Click Log In">
+    Once all fields are filled in and valid, the **Log In** button becomes active. Click it to add the remote. The new remote will appear in the Alto sidebar immediately.
+  </Step>
+</Steps>
+
+<Note>
+  Your Nextcloud or OwnCloud server must be reachable from the machine running Alto. If your server is on a private network or behind a VPN, ensure you are connected to that network before adding the remote or attempting to sync.
+</Note>
+
+<Tip>
+  For better security, consider creating an **app-specific password** in your Nextcloud or OwnCloud account settings rather than using your main account password. App passwords can be revoked at any time without affecting your primary login, and they limit the scope of access granted to Alto. In Nextcloud, you can generate app passwords under **Settings → Security → Devices & sessions**.
+</Tip>

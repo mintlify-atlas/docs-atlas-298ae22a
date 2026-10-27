@@ -1,0 +1,147 @@
+---
+title: "Set Up Alto for Local Development"
+sidebarTitle: "Dev Setup"
+description: "Clone Alto and gtk-js side by side, install dependencies with local file: links, and start the Electron Forge dev server for local development."
+---
+
+Alto consumes gtk-js packages directly from a local clone rather than from the npm registry, so the setup process involves cloning two repositories side by side and building gtk-js before running Alto. This gives you a live feedback loop where changes to gtk-js components are immediately available after a rebuild.
+
+## Prerequisites
+
+Before you begin, make sure the following tools are installed:
+
+- **Node.js** (v18 or later) and **npm** — used to install Alto's dependencies and run Electron Forge
+- **Bun** — used exclusively to install and build the gtk-js monorepo (gtk-js uses Bun as its build tool)
+- **Git** — for cloning both repositories
+
+## Directory Layout
+
+Alto expects gtk-js to be checked out at a specific path relative to the Alto repository. The two repos must sit side by side under a shared parent:
+
+```
+parent-directory/
+├── gtk-js/
+│   └── gtk-js/          ← gtk-js monorepo (cloned here)
+└── alto/                ← this repository
+```
+
+The `file:` protocol entries in Alto's `package.json` all resolve to `../../gtk-js/gtk-js/...` from Alto's root, so this layout is required.
+
+<Warning>
+  gtk-js's internal packages reference each other using `workspace:*` dependencies. npm does not understand the `workspace:*` protocol. All seven gtk-js packages are therefore listed in Alto's `package.json` using the `file:` protocol so that npm can resolve them as local paths without needing to understand the Bun workspace format.
+</Warning>
+
+## Setup Steps
+
+<Steps>
+  <Step title="Clone gtk-js">
+    Create the parent directory and clone the gtk-js repository into the required location:
+
+    ```bash
+    mkdir -p parent-directory/gtk-js
+    cd parent-directory/gtk-js
+    git clone https://github.com/hwittenborn/gtk-js gtk-js
+    ```
+  </Step>
+
+  <Step title="Build gtk-js packages">
+    gtk-js uses Bun as its build tool. Install its dependencies and compile all packages:
+
+    ```bash
+    cd gtk-js/gtk-js
+    bun install
+    bun run build:packages
+    ```
+
+    This produces `dist/` folders in `packages/gtk4/`, `packages/adwaita/`, `themes/adwaita/`, and other compiled packages. Icon packages (`icons/adwaita`, `icons/gtk4`) export TypeScript source directly from `src/index.ts` and do not require a separate compile step — Vite resolves them as source files.
+  </Step>
+
+  <Step title="Clone Alto">
+    From the parent directory, clone Alto alongside the `gtk-js` folder:
+
+    ```bash
+    cd ../../          # back to parent-directory
+    git clone https://github.com/hwittenborn/alto alto
+    cd alto
+    ```
+  </Step>
+
+  <Step title="Install Alto's dependencies">
+    Run `npm install` from Alto's root. npm will create symlinks in `node_modules/@gtk-js/*` pointing to the local gtk-js packages you just built:
+
+    ```bash
+    npm install
+    ```
+
+    Alto's `package.json` lists all seven gtk-js packages via `file:` paths:
+
+    ```json
+    {
+      "dependencies": {
+        "@gtk-js/adwaita":       "file:../../gtk-js/gtk-js/packages/adwaita",
+        "@gtk-js/gtk4":          "file:../../gtk-js/gtk-js/packages/gtk4",
+        "@gtk-js/theme-adwaita": "file:../../gtk-js/gtk-js/themes/adwaita",
+        "@gtk-js/icons-adwaita": "file:../../gtk-js/gtk-js/icons/adwaita",
+        "@gtk-js/icons-gtk4":    "file:../../gtk-js/gtk-js/icons/gtk4",
+        "@gtk-js/icon-helpers":  "file:../../gtk-js/gtk-js/packages/icon-helpers",
+        "@gtk-js/gtk-css":       "file:../../gtk-js/gtk-js/packages/gtk-css"
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Start the development server">
+    Launch Alto with Electron Forge's dev server:
+
+    ```bash
+    npm start
+    ```
+
+    Electron Forge starts Vite for the main process, preload script, and renderer simultaneously, then opens the Electron window. The renderer uses Vite's HMR for React component changes inside Alto itself.
+  </Step>
+</Steps>
+
+## Available npm Scripts
+
+| Script | Command | Description |
+|---|---|---|
+| `start` | `electron-forge start` | Start Alto in development mode with HMR |
+| `lint` | `eslint --ext .ts,.tsx .` | Run ESLint over all TypeScript source files |
+| `package` | `electron-forge package` | Bundle Alto into a platform-specific app |
+| `make` | `electron-forge make` | Create a distributable (deb, rpm, zip, etc.) |
+| `publish` | `electron-forge publish` | Publish a release via the configured publisher |
+
+## Iterating on gtk-js
+
+When you modify gtk-js source code, Vite's HMR cannot automatically detect changes to symlinked built output. You must manually rebuild and restart:
+
+```bash
+# 1. Rebuild gtk-js from its monorepo root
+cd ../../gtk-js/gtk-js
+bun run build:packages
+
+# 2. Restart Alto's dev server
+cd ../../alto
+npm start
+```
+
+<Note>
+  Vite's file-system watcher does not reliably follow symlinks into the `node_modules/@gtk-js/*` symlink targets. Even if HMR appears to fire, the renderer may still be running stale built output. A full restart of `npm start` is the safest way to pick up gtk-js changes.
+</Note>
+
+## Vite Renderer File-System Access
+
+Alto's `vite.renderer.config.ts` explicitly allows Vite's dev server to serve files from the gtk-js monorepo directory. Without this setting, Vite would refuse to resolve modules symlinked outside Alto's project root:
+
+```typescript
+// vite.renderer.config.ts
+export default defineConfig({
+  server: {
+    fs: {
+      allow: ['.', '../../gtk-js/gtk-js'],
+    },
+  },
+});
+```
+
+This `server.fs.allow` entry is already committed to the repository, so no manual change is required after cloning.

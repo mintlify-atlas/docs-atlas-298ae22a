@@ -1,0 +1,50 @@
+---
+title: "Cloud Storage Providers Supported by Alto"
+sidebarTitle: "Overview"
+description: "Alto supports Google Drive, Dropbox, Nextcloud, OwnCloud, pCloud, Proton Drive, and WebDAV. Choose a provider to see setup instructions."
+---
+
+Alto connects to all your cloud storage services from a single native desktop application. Whether you use a major hosted service or run your own self-hosted server, Alto gives you a unified interface to manage and sync your files. Each provider you add becomes a **remote** — a named connection that you can pair with one or more local directories for syncing.
+
+## Supported Providers
+
+Alto supports seven cloud storage providers across two authentication models: **OAuth** (where Alto handles the login flow and no credentials are stored locally) and **credentials-based** (where you supply a server URL, username, and password directly).
+
+| Provider | Auth Type | Notes |
+|---|---|---|
+| Google Drive | OAuth | Name only required |
+| Dropbox | OAuth | Name only required |
+| Nextcloud | Credentials | Server URL + username + password |
+| OwnCloud | Credentials | Server URL + username + password |
+| pCloud | OAuth | Name only required |
+| Proton Drive | Credentials | Username + password + optional TOTP |
+| WebDAV | Credentials | Server URL + username + password |
+
+<Note>
+  Alto's OAuth browser flow is planned for the full backend release. In the current version, OAuth-based remotes (Google Drive, Dropbox, pCloud) are created immediately using only a display name — no browser authentication takes place yet. Additional providers will be added in future releases.
+</Note>
+
+## Choose a Provider
+
+<CardGroup cols={2}>
+  <Card title="Google Drive" icon="cloud" href="/providers/google-drive">
+    Connect your Google Drive account using OAuth. Only a display name is required.
+  </Card>
+  <Card title="Dropbox" icon="dropbox" href="/providers/dropbox">
+    Add a Dropbox remote using OAuth. No credentials are stored locally.
+  </Card>
+  <Card title="Nextcloud / OwnCloud" icon="server" href="/providers/nextcloud">
+    Connect a self-hosted Nextcloud or OwnCloud server with your server URL and credentials.
+  </Card>
+  <Card title="WebDAV" icon="globe" href="/providers/webdav">
+    Add any WebDAV-compatible service or NAS device using a server URL and credentials.
+  </Card>
+</CardGroup>
+
+### Coming Soon
+
+The following providers are recognised by Alto's data model and are planned for future login dialog support:
+
+- **pCloud** — OAuth-based, name only required
+- **Proton Drive** — Credentials-based with optional TOTP two-factor authentication
+- **OwnCloud** — Available today via the [Nextcloud page](/providers/nextcloud); uses the same credential fields

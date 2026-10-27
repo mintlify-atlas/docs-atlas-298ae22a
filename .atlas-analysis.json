@@ -1,0 +1,79 @@
+{
+  "projectType": "saas",
+  "projectName": "Alto",
+  "projectDescription": "A desktop application for managing and syncing cloud storage, built with Electron and a native GTK4/Adwaita UI.",
+  "theme": "almond",
+  "primaryColor": "#3584e4",
+  "lightColor": "#63a0e8",
+  "darkColor": "#1b6acb",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "installation", "quickstart"]
+          },
+          {
+            "group": "Using Alto",
+            "pages": [
+              "guides/adding-a-remote",
+              "guides/sync-directories",
+              "guides/managing-errors",
+              "guides/file-exclusions"
+            ]
+          },
+          {
+            "group": "Cloud Providers",
+            "pages": [
+              "providers/overview",
+              "providers/google-drive",
+              "providers/dropbox",
+              "providers/nextcloud",
+              "providers/webdav"
+            ]
+          },
+          {
+            "group": "Contributing",
+            "pages": [
+              "contributing/development-setup",
+              "contributing/architecture",
+              "contributing/ipc-system"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Manage multiple cloud storage remotes (Google Drive, Dropbox, Nextcloud, pCloud, Proton Drive, WebDAV) from a single interface",
+    "Sync local directories to cloud remote paths with real-time status tracking",
+    "View and resolve sync errors including file conflicts with keep-local or keep-remote options",
+    "Manage per-directory file/folder exclusion glob patterns",
+    "Native GTK4/Adwaita look-and-feel via gtk-js on Electron, with responsive sidebar + detail navigation",
+    "Frameless, transparent window with full window management (minimize, maximize, close) through custom IPC",
+    "Adaptive layout with animated Leaflet sidebar folding for narrow windows",
+    "Type-safe IPC layer between Electron main and renderer processes"
+  ],
+  "publicApiSurface": [
+    "IPC channel: window:close",
+    "IPC channel: window:minimize",
+    "IPC channel: window:toggle-maximized",
+    "IPC channel: window:set-decoration-insets (top, right, bottom, left)",
+    "IPC event: window:state-changed (isMaximized: boolean)",
+    "Type: Remote { id, name, providerType }",
+    "Type: SyncDir { id, remoteId, localPath, remotePath, status, errors, exclusions }",
+    "Type: SyncStatus — 'checking' | 'syncing' | 'synced' | 'error' | 'disconnected'",
+    "Type: SyncError — GeneralError | ConflictError",
+    "Type: ProviderType — 'dropbox' | 'gdrive' | 'nextcloud' | 'owncloud' | 'pcloud' | 'proton-drive' | 'webdav'",
+    "Mock store action: ADD_REMOTE",
+    "Mock store action: DELETE_REMOTE",
+    "Mock store action: ADD_SYNC_DIR",
+    "Mock store action: DELETE_SYNC_DIR",
+    "Mock store action: RESOLVE_ERROR / DISMISS_ERROR",
+    "Mock store action: ADD_EXCLUSION / UPDATE_EXCLUSION / REMOVE_EXCLUSION",
+    "Mock store action: SET_STATUS",
+    "Validation: validateRemoteName(name, existingNames) => string | null"
+  ]
+}

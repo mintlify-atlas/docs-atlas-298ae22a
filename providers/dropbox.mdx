@@ -1,0 +1,79 @@
+---
+title: "Connect Dropbox to Alto"
+sidebarTitle: "Dropbox"
+description: "Add Dropbox to Alto as a cloud remote. Dropbox uses OAuth authentication — provide a display name and Alto handles the rest."
+---
+
+Dropbox is a popular cloud storage and file-synchronisation service, and Alto integrates with it using OAuth. Because authentication is handled entirely by the OAuth flow, you do not need to enter a password — just give the remote a **display name** and Alto takes care of the rest.
+
+## Prerequisites
+
+You need an active Dropbox account. No special Dropbox configuration is required before connecting — Alto handles the OAuth handshake automatically when the real backend is in place.
+
+## Adding a Dropbox Remote
+
+<Steps>
+  <Step title="Open the login dialog">
+    Click the **+** button in the Alto sidebar to open the **Log In** dialog.
+  </Step>
+  <Step title="Select Dropbox as the server type">
+    In the **Server Type** dropdown, select **Dropbox** from the list of available providers.
+  </Step>
+  <Step title="Enter a display name">
+    Type a display name for this remote in the **Name** field. This name appears in the Alto sidebar and is used to identify the remote throughout the app.
+
+    The name must pass the following validation rules:
+
+    - It cannot be empty.
+    - It cannot duplicate the name of an existing remote.
+    - It must match the allowed character pattern:
+
+    ```text
+    ^[0-9a-zA-Z_.][0-9a-zA-Z_. -]*[0-9a-zA-Z_.-]$
+    ```
+
+    In plain terms, names must:
+    - Only contain numbers, letters, `_`, `-`, `.`, and spaces
+    - Not start with `-` or a space
+    - Not end with a space
+
+    If the name fails validation, the field will be highlighted and a tooltip will display one of the following messages:
+
+    | Situation | Error message |
+    |---|---|
+    | Field is empty | `Name cannot be empty` |
+    | Name already in use | `Name already exists.` |
+    | Invalid characters or format | `Invalid name. Names must:\n- Only contain numbers, letters, '_', '-', '.', and spaces\n- Not start with '-' or a space\n- Not end with a space` |
+  </Step>
+  <Step title="Click Log In">
+    Once the name is valid, the **Log In** button becomes active. Click it to add the remote. The new Dropbox remote will appear in the Alto sidebar immediately.
+  </Step>
+</Steps>
+
+## Name Validation Pattern
+
+The full regular expression applied to remote names is:
+
+```text
+^[0-9a-zA-Z_.][0-9a-zA-Z_. -]*[0-9a-zA-Z_.-]$
+```
+
+Some valid examples:
+
+```text
+My Dropbox
+work-files
+shared_team.storage
+```
+
+Some invalid examples:
+
+```text
+ my dropbox      (starts with a space)
+team files       (ends with a space — trailing space not visible)
+-archive         (starts with a hyphen)
+```
+
+<Note>
+  Alto's OAuth browser authentication flow is planned for the full backend release. In the current version, clicking **Log In** creates the Dropbox remote immediately without opening a browser window or exchanging tokens with Dropbox. Once the real backend is integrated, the OAuth flow will launch automatically after you click Log In.
+</Note>

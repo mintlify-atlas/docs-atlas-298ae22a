@@ -1,47 +1,85 @@
 ---
-title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
+title: "Get Started with Alto"
+sidebarTitle: "Quickstart"
+description: "Set up Alto for the first time, connect your first cloud storage remote, and configure a sync directory to start syncing in minutes."
 ---
 
-Describe how someone begins using your product. What is the first thing they need to do? Are there any prerequisites?
+From first launch to an actively syncing remote, Alto is designed to get out of your way as quickly as possible. This guide walks you through every step of the initial setup — opening the app, adding a cloud remote, configuring a sync directory, and understanding the live status indicators that tell you what Alto is doing at any moment.
 
-A quickstart should take someone from zero to using your product. They'll get a quick win and a sense of what they can accomplish.
+<Note>
+  Alto is currently in **active development**. The UI is a fully interactive functional mock with planned sync backend integration. All remote management, directory configuration, and status indicators work in the interface, but actual file synchronisation to cloud providers is not yet wired up.
+</Note>
 
-## Prerequisites
-
-Before you begin, you must have:
-
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
-
-## Get started
+## First-Run Setup
 
 <Steps>
-  <Step title="Install">
-    Describe how to install your product or sign up.
+  <Step title="Launch Alto">
+    Open Alto from your application launcher or, if you built from source, with `npm start` from the project directory. The main window opens with two panels side by side:
 
-    ```bash
-    npm install your-package
-    ```
+    - **Sidebar (left)** — Lists all configured cloud remotes. Starts empty on first run. The header bar shows an **Add Server** button (`+`) on the left and a menu button on the right.
+    - **Content area (right)** — Shows the sync directories and status for whichever remote is selected in the sidebar.
+
+    On narrow screens or small windows, the layout folds into a single panel and you can navigate between the sidebar and content area using the navigation arrows.
   </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
 
-    ```bash
-    your-cli init
-    ```
+  <Step title="Add your first cloud remote">
+    Click the **+** (Add Server) button in the sidebar header bar. This opens the **Log In** dialog as a modal overlay.
+
+    In the dialog:
+    1. Use the **Server Type** dropdown to pick your cloud provider (e.g. Google Drive, Dropbox, Nextcloud).
+    2. Fill in the fields that appear for your chosen provider. Google Drive, Dropbox, and pCloud only ask for a **Name**; Nextcloud, OwnCloud, and WebDAV also ask for a **Server URL**, username, and password; Proton Drive asks for username, password, and an optional TOTP code.
+    3. Your remote name must be unique, must not be empty, and may only contain letters, numbers, underscores, hyphens, periods, and spaces. It cannot start with a hyphen or space, and cannot end with a space.
+    4. Click **Log In**. The button remains disabled until all validation passes.
+
+    Once confirmed, your new remote appears in the sidebar list.
+
+    For a detailed walkthrough of every provider's login flow, see the [Adding a Remote](/guides/adding-a-remote) guide.
   </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
 
-    ```bash
-    your-cli start
-    ```
+  <Step title="Add a sync directory">
+    Select your new remote in the sidebar to open its content panel. The panel shows a list of configured sync directories — empty to start.
+
+    Click **Add Directory** (or the equivalent action in the content header bar) to configure your first sync:
+
+    1. **Local path** — Choose the local folder to sync. Alto uses Electron's native file chooser dialog.
+    2. **Remote path** — Set the corresponding path on the cloud remote.
+    3. Save the configuration to add the directory to the list.
+
+    You can add multiple sync directories per remote, and each directory is managed independently. For full details on options like file exclusions, see [Sync Directories](/guides/sync-directories).
+  </Step>
+
+  <Step title="Monitor sync status">
+    Each sync directory row displays a live status indicator. Alto reports one of the following states:
+
+    | Status | Meaning |
+    |---|---|
+    | **Synced** | The local directory matches the remote — no action needed. |
+    | **Checking** | Alto is comparing local and remote file trees to detect changes. |
+    | **Syncing** | A sync operation is in progress; files are being transferred. |
+    | **Error** | One or more files could not be synced. See step 5. |
+    | **Disconnected** | Alto cannot reach the remote (network issue or credential problem). |
+
+    The status updates automatically. You do not need to refresh the view.
+  </Step>
+
+  <Step title="Resolve any errors">
+    If a directory enters the **Error** state, click on the directory row to drill into the detail view. The detail view shows a breakdown of the individual files that failed, along with the reason for each failure. From here you can:
+
+    - Review the error message and decide how to handle the conflict.
+    - Remove a file exclusion or add a new one to work around persistent issues.
+    - Dismiss resolved errors once you have addressed the underlying problem.
+
+    For a full guide to the error and conflict resolution workflow, see [Managing Errors](/guides/managing-errors).
   </Step>
 </Steps>
 
-<Tip>
-  Give people a way to get help. This could be a link to a support page, a chat with a customer support agent, or a forum for your product.
+## What's Next?
 
-  Example: Need help? Reach out to us at [support@yourcompany.com](mailto:support@yourcompany.com).
-</Tip>
+<CardGroup cols={2}>
+  <Card title="Adding a Remote" icon="cloud-plus" href="/guides/adding-a-remote">
+    Detailed setup instructions for every supported cloud provider, including OAuth flows and server-based credentials.
+  </Card>
+  <Card title="Sync Directories" icon="folder-sync" href="/guides/sync-directories">
+    Configure local-to-remote directory mappings, set up file exclusions, and manage multiple directories per remote.
+  </Card>
+</CardGroup>

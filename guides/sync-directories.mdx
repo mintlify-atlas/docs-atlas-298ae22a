@@ -1,0 +1,74 @@
+---
+title: "Sync Local Folders with Cloud Storage"
+sidebarTitle: "Sync Directories"
+description: "Map a local folder to a remote cloud path in Alto and track sync status in real time. Understand synced, checking, error, and disconnected states."
+---
+
+A **sync directory** is the core unit of work in Alto: a pairing of a local folder path with a path on a cloud remote that Alto keeps in sync. Each sync directory belongs to exactly one remote, and a single remote can have as many sync directory pairs as you need — for example, one for your documents and a separate one for photos. Alto monitors both sides of the pair continuously and reports live status directly in the UI.
+
+## What is a sync directory?
+
+Internally, a sync directory stores four pieces of information: the remote it belongs to (`remoteId`), an absolute local path, a remote path, and a runtime status. Errors and file exclusion patterns are also tracked per sync directory and are visible in the detail view. This design mirrors Celeste's `sync_dirs` table, extended with live runtime state.
+
+## Adding a sync directory
+
+<Steps>
+  <Step title="Select a remote in the sidebar">
+    Click the remote you want to sync with in the left sidebar. Its content view opens, showing any existing sync directory pairs for that remote along with their current status.
+  </Step>
+
+  <Step title="Click the add button">
+    In the content area header, click the **New Folder** button (`folder-new-symbolic`, tooltip: "New Folder") to begin adding a sync directory.
+  </Step>
+
+  <Step title="Choose a local folder">
+    Alto opens your operating system's native folder picker dialog (via Electron's `dialog.showOpenDialog`). Navigate to the local folder you want to sync and confirm your selection. Alto records the absolute path to that folder.
+  </Step>
+
+  <Step title="Enter the remote path">
+    After the local path is selected, enter the path on the remote where Alto should sync the folder. The remote path defaults to `/` or the folder name. Alto uses this path to locate the corresponding directory on your cloud storage account.
+  </Step>
+
+  <Step title="Alto begins syncing">
+    The new sync directory row appears in the list. Alto immediately begins checking the local and remote state, and the row shows a live status indicator. See the [Sync status reference](#sync-status-reference) below to understand what each status means.
+  </Step>
+</Steps>
+
+## Sync status reference
+
+Each sync directory row displays one of five statuses. The status is shown as both an icon prefix and a subtitle on the row.
+
+| Status | Icon | Subtitle text | Meaning |
+|---|---|---|---|
+| `checking` | Spinner (animated) | "Checking for changes..." | Alto is comparing the local and remote state to determine what needs to sync. |
+| `syncing` | Spinner (animated) | "Syncing files..." | File transfers are actively in progress between the local folder and the remote. |
+| `synced` | Checkmark | "Files are synced" | The local folder and the remote path are fully in sync — no transfers pending. |
+| `error` | Warning (`dialog-warning-symbolic`) | "*n* error(s) found" | One or more sync errors occurred. Click the row to open the detail view and inspect the errors. |
+| `disconnected` | Offline (`network-offline-symbolic`) | "Disconnected" | Alto cannot reach the remote. Check your internet connection or the remote's server settings. |
+
+<Tip>
+  When a sync directory shows the `error` status, click the row to open the detail view. The **Sync Errors** section lists every error with its file path and a description. From there you can dismiss general errors or choose which version to keep for file conflicts.
+</Tip>
+
+## Deleting a sync directory
+
+To stop syncing a directory pair:
+
+1. Click the sync directory row to open its detail view.
+2. Click the **Delete** button (`user-trash-symbolic`) in the detail view.
+3. Alto shows a confirmation dialog:
+   > "Are you sure you want to stop syncing '*localPath*' to '*remotePath*'?"
+4. Click **Yes** to confirm. Alto removes the sync directory and navigates back to the directory list. Click **No** to cancel.
+
+Deleting a sync directory only removes the pairing from Alto — it does not delete any files locally or on the remote.
+
+---
+
+<CardGroup cols={2}>
+  <Card title="Managing Errors" icon="triangle-exclamation" href="/guides/managing-errors">
+    Learn how to view, resolve, and dismiss sync errors and file conflicts from the detail view.
+  </Card>
+  <Card title="File Exclusions" icon="filter" href="/guides/file-exclusions">
+    Configure glob patterns to prevent specific files or folders from being synced.
+  </Card>
+</CardGroup>

@@ -1,20 +1,70 @@
 ---
-title: "Introduction"
-description: "Welcome to your project"
+title: "Alto: The Best Way to Use Your Cloud Storage"
+sidebarTitle: "Home"
+description: "Alto is a desktop application for managing and syncing cloud storage across Google Drive, Dropbox, Nextcloud, and more — all from one native interface."
 ---
 
-Write a short description of your product here. What it does, who it's for, and what they can accomplish with it.
+Alto is a desktop application that brings all your cloud storage into one place. Manage remotes, sync local folders to the cloud, resolve conflicts, and configure exclusions — all from a clean, native GTK4/Adwaita interface built on Electron.
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Download and install Alto on your system
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Set up your first cloud remote in minutes
+  </Card>
+  <Card title="Cloud Providers" icon="cloud" href="/providers/overview">
+    See which cloud services Alto supports
+  </Card>
+  <Card title="Contributing" icon="code" href="/contributing/development-setup">
+    Build Alto from source and contribute
+  </Card>
+</CardGroup>
+
+## What Alto Does
+
+Alto lets you connect to multiple cloud storage providers and keep local directories in sync with remote paths. You can monitor sync status in real time, resolve file conflicts, and control exactly which files get synced with glob-based exclusion patterns.
+
+<CardGroup cols={3}>
+  <Card title="Multiple Remotes" icon="server">
+    Connect Google Drive, Dropbox, Nextcloud, pCloud, Proton Drive, WebDAV, and more from one app.
+  </Card>
+  <Card title="Sync Directories" icon="folder-sync">
+    Map local folders to cloud paths and track their sync status at a glance.
+  </Card>
+  <Card title="Conflict Resolution" icon="code-merge">
+    Choose to keep the local or remote version whenever a sync conflict is detected.
+  </Card>
+</CardGroup>
+
+## Get Started in Three Steps
+
+<Steps>
+  <Step title="Install Alto">
+    Download the latest release for your platform from the [installation page](/installation).
+  </Step>
+  <Step title="Add a Cloud Remote">
+    Open Alto and click the **+** button in the sidebar to connect your first cloud storage account. See [Adding a Remote](/guides/adding-a-remote) for a walkthrough.
+  </Step>
+  <Step title="Configure Sync Directories">
+    Pick a local folder and a remote path to sync. Alto will keep them in sync and alert you to any errors. See [Sync Directories](/guides/sync-directories) for details.
+  </Step>
+</Steps>
+
+## Supported Cloud Providers
+
+Alto supports a range of cloud storage services out of the box:
+
+| Provider | Type |
+|---|---|
+| Google Drive | OAuth |
+| Dropbox | OAuth |
+| Nextcloud | Username + Password |
+| OwnCloud | Username + Password |
+| pCloud | OAuth |
+| Proton Drive | Username + Password |
+| WebDAV | Username + Password |
 
 <Tip>
-  Ready to make this your own? Start by editing this page. Update your `docs.json` file to customize your site. Then fill out the [Quickstart](/quickstart) page.
+  More providers will be added over time. See the [Cloud Providers](/providers/overview) section for setup details for each one.
 </Tip>
-
-<Card title="Quickstart" icon="rocket" href="/quickstart">
-  This card links to the quickstart page in your project.
-</Card>
-<Card title="Components" icon="puzzle-piece" href="https://mintlify.com/docs/components">
-  Add cards, callouts, steps, tabs, and more to design and structure your pages.
-</Card>
-<Card title="Settings" icon="gear" href="https://mintlify.com/docs/organize/settings">
-  Set your site name, branding, and navigation in the `docs.json` file.
-</Card>

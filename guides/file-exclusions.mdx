@@ -1,0 +1,61 @@
+---
+title: "Exclude Files and Folders from Syncing"
+sidebarTitle: "File Exclusions"
+description: "Configure glob patterns in Alto to prevent specific files or folders from being synced to or from your cloud remote."
+---
+
+File exclusions let you tell Alto to ignore specific files or folders when syncing a directory pair. Instead of syncing everything in a local folder, you can define glob patterns — for example `*.log` or `node_modules/**` — and Alto will skip any path that matches. Exclusion patterns are configured per sync directory from the detail view, so each sync pair can have its own independent set of rules.
+
+## How exclusions work
+
+Exclusions are stored as a list of glob patterns on each sync directory (in Celeste, these are written to `.sync-exclude.lst` files; Alto manages them in the detail view UI). When Alto evaluates whether to transfer a file, it checks the file path against every pattern in the list. Any file or folder whose path matches is skipped on both sides of the sync.
+
+<Note>
+  Exclusion patterns apply to **both local and remote paths**. A pattern that matches a file locally will also prevent Alto from syncing or touching the corresponding remote file, and vice versa.
+</Note>
+
+### Example patterns
+
+```text
+*.tmp
+.cache/**
+__pycache__
+node_modules/**
+*.log
+```
+
+<Tip>
+  Use `**` to match recursively across any number of subdirectory levels. For example, `node_modules/**` excludes the entire `node_modules` directory tree, no matter how deeply nested. A pattern without `**` (like `__pycache__`) matches only at the top level of the sync directory.
+</Tip>
+
+## Adding an exclusion pattern
+
+<Steps>
+  <Step title="Open the sync directory detail view">
+    In the sync directory list, click the row for the sync pair you want to configure. Alto pushes the **detail view** onto the navigation stack, showing the Sync Errors section (if any) and the **File/Folder Exclusions** section below it.
+  </Step>
+
+  <Step title="Click the add button">
+    In the **File/Folder Exclusions** header row, click the **+** button (`list-add-symbolic`). This dispatches `ADD_EXCLUSION` and appends a new empty `EntryRow` at the bottom of the exclusions list.
+  </Step>
+
+  <Step title="Type your glob pattern">
+    The new row is an editable `AdwEntryRow` with the placeholder title "Pattern". Type the glob pattern you want to exclude — for example, `*.tmp` or `.cache/**`.
+  </Step>
+
+  <Step title="Apply the pattern">
+    Click the **checkmark** (apply button) that appears when the text field has unsaved changes. Alto dispatches `UPDATE_EXCLUSION` with your pattern and saves it to the sync directory. The apply button disappears once the value is saved.
+  </Step>
+</Steps>
+
+## Editing an existing exclusion
+
+Each exclusion row is an `AdwEntryRow` pre-filled with its saved pattern. To change a pattern:
+
+1. Click the row to focus the text field.
+2. Edit the pattern text.
+3. Click the **checkmark** (apply button) that appears when the field has unsaved changes. Alto dispatches `UPDATE_EXCLUSION` and saves the new pattern.
+
+## Removing an exclusion
+
+To delete an exclusion pattern entirely, click the **remove** button (`list-remove-symbolic`) on the right side of the exclusion row. Alto dispatches `REMOVE_EXCLUSION` and the row is removed from the list immediately. There is no confirmation step for removing an exclusion.

@@ -1,0 +1,75 @@
+---
+title: "Connect WebDAV Storage to Alto"
+sidebarTitle: "WebDAV"
+description: "Add any WebDAV-compatible cloud storage to Alto. Works with self-hosted servers and services that expose a WebDAV interface."
+---
+
+WebDAV (Web Distributed Authoring and Versioning) is an extension of the HTTP protocol that allows clients to read, write, and manage files on a remote server. It is a widely supported standard — many NAS devices, self-hosted platforms, and cloud services expose a WebDAV endpoint, making it a flexible option when a dedicated provider integration is not available. If your storage service speaks WebDAV, Alto can connect to it.
+
+Services and devices known to support WebDAV include:
+
+- **Nextcloud** and **OwnCloud** (also available as dedicated providers in Alto)
+- **Box** (via `https://dav.box.com/dav`)
+- **QNAP** and **Synology** NAS devices
+- **Apache** and **Nginx** servers with WebDAV modules enabled
+- Any other service that exposes a WebDAV endpoint
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+- The full WebDAV URL for the service or server (see your service's documentation or settings)
+- A valid username and password
+- Network access to the server from the machine running Alto
+
+## Adding a WebDAV Remote
+
+<Steps>
+  <Step title="Open the login dialog">
+    Click the **+** button in the Alto sidebar to open the **Log In** dialog.
+  </Step>
+  <Step title="Select WebDAV as the server type">
+    In the **Server Type** dropdown, select **WebDAV** from the list of available providers.
+  </Step>
+  <Step title="Enter a display name">
+    Type a display name for this remote in the **Name** field. This name appears in the Alto sidebar and is used to identify the remote throughout the app.
+  </Step>
+  <Step title="Enter the WebDAV server URL">
+    Type the full WebDAV endpoint URL in the **Server URL** field. This is typically different from the web interface URL — consult your service's documentation to find the correct WebDAV path.
+
+    For example, a Nextcloud WebDAV URL looks like:
+
+    ```text
+    https://cloud.example.com/remote.php/dav/files/your-username/
+    ```
+
+    A generic self-hosted WebDAV server might use:
+
+    ```text
+    https://dav.example.com/
+    ```
+  </Step>
+  <Step title="Enter your username and password">
+    Fill in the **Username** and **Password** fields with the credentials for your WebDAV account. For services that offer app-specific passwords (such as Nextcloud), use those instead of your primary account password.
+  </Step>
+  <Step title="Click Log In">
+    Once all fields are filled in and valid, the **Log In** button becomes active. Click it to add the remote. The new WebDAV remote will appear in the Alto sidebar immediately.
+  </Step>
+</Steps>
+
+<Tip>
+  Finding the WebDAV URL varies by service. Here are a few common examples:
+
+  | Service | WebDAV URL pattern |
+  |---|---|
+  | Nextcloud | `https://<your-host>/remote.php/dav/files/<username>/` |
+  | OwnCloud | `https://<your-host>/remote.php/webdav/` |
+  | Box | `https://dav.box.com/dav` |
+  | Synology DSM | `https://<your-host>/` (enable WebDAV in DSM Control Panel first) |
+
+  If you cannot find the WebDAV URL, check your service's help documentation or administration panel.
+</Tip>
+
+<Note>
+  Alto supports both `https://` and `http://` WebDAV URLs, but **HTTPS is strongly recommended**. An HTTP connection transmits your username and password in plain text, which exposes your credentials to anyone who can observe the network traffic between Alto and the server. Only use HTTP if the server is on a trusted local network and HTTPS is not available.
+</Note>

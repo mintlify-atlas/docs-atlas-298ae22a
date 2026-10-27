@@ -1,0 +1,265 @@
+---
+title: "Type-Safe IPC Between Main and Renderer"
+sidebarTitle: "IPC System"
+description: "Alto uses a typed IPC layer inspired by GitHub Desktop's pattern. Channel signatures define both params and return types automatically."
+---
+
+Alto's IPC layer gives you compile-time guarantees on every message that crosses the Electron process boundary. Instead of passing raw strings and hoping the receiver handles the right argument types, channel definitions in `src/ipc-shared.ts` are TypeScript function types — `Parameters<T>` and `ReturnType<T>` extract the full contract automatically, so there are no runtime type assertions and no possibility of mismatched arguments slipping through.
+
+## The Core Pattern
+
+The design is inspired by [GitHub Desktop's typed IPC approach](https://github.com/desktop/desktop). Each channel is a key in a type map whose value is a function signature. The parameter list and return type of that function become the enforced contract for both the sender and the handler — no separate type annotations needed at the call site.
+
+There are two channel maps:
+
+- **`RequestChannels`** — fire-and-forget messages from the renderer to the main process (backed by `ipcRenderer.send` / `ipcMain.on`)
+- **`RequestResponseChannels`** — request-response messages from the renderer to the main process that return a `Promise` (backed by `ipcRenderer.invoke` / `ipcMain.handle`)
+
+## Channel Definitions (`src/ipc-shared.ts`)
+
+```typescript
+/**
+ * Typed IPC channel definitions, modeled after GitHub Desktop's pattern.
+ * The function signature IS the contract — params and return type are
+ * extracted automatically via Parameters<> and ReturnType<>.
+ */
+
+/** Fire-and-forget messages (renderer -> main) */
+export type RequestChannels = {
+  'window:close': () => void;
+  'window:minimize': () => void;
+  'window:toggle-maximized': () => void;
+  'window:set-decoration-insets': (top: number, right: number, bottom: number, left: number) => void;
+};
+
+/** Request-response channels (renderer -> main, returns Promise) */
+export type RequestResponseChannels = {};
+```
+
+### Current `RequestChannels`
+
+| Channel | Parameters | Description |
+|---|---|---|
+| `window:close` | — | Closes the window |
+| `window:minimize` | — | Minimizes the window to the taskbar |
+| `window:toggle-maximized` | — | Maximizes the window, or restores it if already maximized |
+| `window:set-decoration-insets` | `top, right, bottom, left: number` | Reports shadow padding to the OS so window snapping works correctly |
+
+`RequestResponseChannels` is currently empty but is already in place — add request-response channels here when the sync backend needs them.
+
+---
+
+## Main Process Handlers (`src/ipc-main.ts`)
+
+The `ipc-main` module provides two typed wrappers around Electron's `ipcMain`. Both functions constrain their `channel` argument to a key of the appropriate channel map and derive the listener's parameter types automatically:
+
+```typescript
+import { ipcMain, type IpcMainEvent, type IpcMainInvokeEvent } from 'electron';
+import type { RequestChannels, RequestResponseChannels } from '@/ipc-shared';
+
+export function handle<T extends keyof RequestResponseChannels>(
+  channel: T,
+  listener: (
+    event: IpcMainInvokeEvent,
+    ...args: Parameters<RequestResponseChannels[T]>
+  ) => ReturnType<RequestResponseChannels[T]>,
+) {
+  ipcMain.handle(channel, listener as any);
+}
+
+export function on<T extends keyof RequestChannels>(
+  channel: T,
+  listener: (
+    event: IpcMainEvent,
+    ...args: Parameters<RequestChannels[T]>
+  ) => void,
+) {
+  ipcMain.on(channel, listener as any);
+}
+
+export default { handle, on };
+```
+
+`on<T>()` wraps `ipcMain.on` for fire-and-forget channels. `handle<T>()` wraps `ipcMain.handle` for request-response channels that return a value. Both use `Parameters<ChannelMap[T]>` so the listener's argument list is always in sync with the channel definition in `ipc-shared.ts`.
+
+### Registering Handlers in `src/main.ts`
+
+The main process registers all four window handlers using the typed `ipc.on`:
+
+```typescript
+import ipc from '@/ipc-main';
+
+ipc.on('window:close', (e) => {
+  BrowserWindow.fromWebContents(e.sender)?.close();
+});
+
+ipc.on('window:minimize', (e) => {
+  BrowserWindow.fromWebContents(e.sender)?.minimize();
+});
+
+ipc.on('window:toggle-maximized', (e) => {
+  const win = BrowserWindow.fromWebContents(e.sender);
+  if (win?.isMaximized()) {
+    win.unmaximize();
+  } else {
+    win?.maximize();
+  }
+});
+
+ipc.on('window:set-decoration-insets', (e, top, right, bottom, left) => {
+  const win = BrowserWindow.fromWebContents(e.sender);
+  (win as any).setDecorationInsets?.({ top, right, bottom, left });
+});
+```
+
+TypeScript infers `top`, `right`, `bottom`, and `left` as `number` directly from the `RequestChannels` definition — no explicit types needed on the handler parameters.
+
+---
+
+## Renderer Senders (`src/ipc-renderer.ts`)
+
+The renderer-side module mirrors the main-process module with typed wrappers around `ipcRenderer`:
+
+```typescript
+import { ipcRenderer } from 'electron';
+import type { RequestChannels, RequestResponseChannels } from '@/ipc-shared';
+
+export function invoke<T extends keyof RequestResponseChannels>(
+  channel: T,
+  ...args: Parameters<RequestResponseChannels[T]>
+): ReturnType<RequestResponseChannels[T]> {
+  return ipcRenderer.invoke(channel, ...args) as any;
+}
+
+export function send<T extends keyof RequestChannels>(
+  channel: T,
+  ...args: Parameters<RequestChannels[T]>
+): void {
+  ipcRenderer.send(channel, ...args);
+}
+
+export default { invoke, send };
+```
+
+`send` and `invoke` are both exported from `src/ipc-renderer.ts` and re-exposed through the preload's `contextBridge` as `window.electronAPI.send` and `window.electronAPI.invoke`.
+
+### Sending Messages from React Components
+
+In `src/App.tsx`, the window control callbacks call `window.electronAPI.send` directly. TypeScript validates the channel name and argument types at compile time:
+
+```typescript
+<GtkWindow
+  onClose={() => window.electronAPI.send('window:close')}
+  onMinimize={() => window.electronAPI.send('window:minimize')}
+  onMaximize={() => window.electronAPI.send('window:toggle-maximized')}
+>
+```
+
+For `window:set-decoration-insets`, the four numeric arguments are also fully typed:
+
+```typescript
+window.electronAPI.send('window:set-decoration-insets', top, right, bottom, left);
+```
+
+Passing the wrong number of arguments, or passing a string where a number is expected, is a compile error.
+
+---
+
+## Window State Event (Main → Renderer)
+
+One event flows in the opposite direction — from the main process to the renderer. When the window is maximized, fullscreen, or tiled, the main process sends a `window:state-changed` event with a boolean payload:
+
+```typescript
+// src/main.ts
+const sendState = () => {
+  const noShadow =
+    mainWindow.isMaximized() ||
+    mainWindow.isFullScreen() ||
+    (mainWindow as any).isTiled();
+  mainWindow.webContents.send('window:state-changed', noShadow);
+};
+```
+
+This channel is not part of `RequestChannels` or `RequestResponseChannels` because it originates in the main process. It is instead wired up explicitly in the preload script via `ipcRenderer.on`:
+
+```typescript
+// src/preload.ts
+onWindowStateChanged: (callback: (maximized: boolean) => void) => {
+  const handler = (_event: Electron.IpcRendererEvent, maximized: boolean) =>
+    callback(maximized);
+  ipcRenderer.on('window:state-changed', handler);
+  return () => ipcRenderer.removeListener('window:state-changed', handler);
+},
+```
+
+The returned cleanup function is used as the `useEffect` return value in `App.tsx` to remove the listener when the component unmounts.
+
+---
+
+## Extending the IPC System
+
+<Tip>
+  To add a new channel, update only `src/ipc-shared.ts`. The TypeScript compiler will then flag every `ipc.on` / `ipc.handle` call and every `send` / `invoke` call that references an out-of-date channel name or wrong argument types — no other files need to be manually audited.
+</Tip>
+
+### Adding a Fire-and-Forget Channel
+
+Add the channel to `RequestChannels` in `src/ipc-shared.ts`:
+
+```typescript
+// src/ipc-shared.ts
+export type RequestChannels = {
+  'window:close': () => void;
+  'window:minimize': () => void;
+  'window:toggle-maximized': () => void;
+  'window:set-decoration-insets': (top: number, right: number, bottom: number, left: number) => void;
+  // Add new channel:
+  'app:open-settings': () => void;
+};
+```
+
+Then register the handler in `src/main.ts`:
+
+```typescript
+ipc.on('app:open-settings', (e) => {
+  // open settings window, etc.
+});
+```
+
+And call it from the renderer:
+
+```typescript
+window.electronAPI.send('app:open-settings');
+```
+
+### Adding a Request-Response Channel
+
+Add the channel to `RequestResponseChannels` with the desired return type:
+
+```typescript
+// src/ipc-shared.ts
+export type RequestResponseChannels = {
+  'sync:get-status': (remoteId: string) => Promise<SyncStatus>;
+};
+```
+
+Register the handler with `ipc.handle` in `src/main.ts`:
+
+```typescript
+ipc.handle('sync:get-status', async (e, remoteId) => {
+  // remoteId is typed as string
+  return fetchStatusFromBackend(remoteId); // must return Promise<SyncStatus>
+});
+```
+
+Call it from the renderer using `invoke`:
+
+```typescript
+const status = await window.electronAPI.invoke('sync:get-status', remoteId);
+```
+
+---
+
+## Future: Sync Backend Channels
+
+`RequestResponseChannels` is currently empty because Alto has no real sync backend — all state is provided by the [mock data layer](/contributing/architecture#mock-data-layer-src-mock). When the SQLite/rclone sync backend is added, `RequestResponseChannels` will be populated with channels for reading and mutating sync state (remotes, sync directories, errors, exclusions). The typed pattern means those channels will be just as safe to call as the window management channels are today.

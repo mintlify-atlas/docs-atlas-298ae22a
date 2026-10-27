@@ -1,0 +1,105 @@
+---
+title: "Resolve Sync Errors and File Conflicts"
+sidebarTitle: "Managing Errors"
+description: "Alto surfaces two kinds of sync errors: general errors and file conflicts. Learn how to view, resolve, and dismiss them from the detail view."
+---
+
+When Alto encounters a problem syncing a file, it records a sync error and marks the affected sync directory with the `error` status. Rather than silently skipping problematic files, Alto surfaces errors explicitly so you always know the state of your data. There are two distinct error types — a **general error** when a file simply fails to sync, and a **conflict error** when both the local and remote copies of a file have been modified since the last sync.
+
+## Error types
+
+<Accordion title="General Error">
+  A general error means Alto tried to sync a specific file and failed for a reason that doesn't involve a conflict — for example, a permission problem, a network interruption mid-transfer, or a filename that the remote doesn't support.
+
+  **TypeScript shape:**
+
+  ```ts
+  interface GeneralError {
+    type: "general";
+    filePath: string;
+    message: string;
+  }
+  ```
+
+  - `filePath` — the path of the file that failed to sync
+  - `message` — a human-readable description of what went wrong
+
+  **Resolution:** Alto asks "Would you like to dismiss this error?" — answering **Yes** dispatches `DISMISS_ERROR` and removes the error from the list. Answering **No** keeps the error recorded.
+</Accordion>
+
+<Accordion title="Conflict Error">
+  A conflict error means both the local copy and the remote copy of the same file were changed after the last successful sync. Alto cannot automatically decide which version is correct, so it pauses syncing for that file and asks you to choose.
+
+  **TypeScript shape:**
+
+  ```ts
+  interface ConflictError {
+    type: "conflict";
+    filePath: string;
+    localPath: string;
+    remotePath: string;
+  }
+  ```
+
+  - `filePath` — the shared logical path of the conflicting file
+  - `localPath` — the absolute path of the local copy
+  - `remotePath` — the path of the remote copy
+
+  **Resolution:** Alto asks which version to keep. You can choose **Local**, **Remote**, or **Cancel**. Choosing a version dispatches `RESOLVE_ERROR` and discards the other copy permanently.
+
+  <Warning>
+    Resolving a conflict is irreversible. Whichever version you do not choose is permanently discarded — Alto does not keep a backup of the non-chosen file. Make sure you have reviewed both copies before confirming.
+  </Warning>
+</Accordion>
+
+## Viewing errors
+
+Errors are shown in the detail view for a sync directory. The **Sync Errors** section is hidden when there are no errors, and appears automatically as soon as one error is recorded.
+
+1. In the sync directory list, find the row showing `error` status (subtitle: "*n* error(s) found", warning icon).
+2. Click the row to push the **detail view** onto the navigation stack.
+3. The **Sync Errors** section appears at the top of the detail view, above the File/Folder Exclusions section.
+4. Each error is displayed as a row with the file path as the title and the error message or conflict description as the subtitle.
+
+When there are **four or more errors**, the Sync Errors section becomes a scrollable window (approximately 150 px tall) so the rest of the detail view remains accessible.
+
+## Resolving errors
+
+Click any error row to open a resolution dialog. The dialog content depends on the error type:
+
+### General error
+
+Alto shows:
+
+> **Would you like to dismiss this error?**
+
+| Button | Action |
+|---|---|
+| **No** | Closes the dialog; the error remains. |
+| **Yes** | Dispatches `DISMISS_ERROR` — the error is removed from the list. |
+
+### Conflict error
+
+Alto shows:
+
+> **Both the local item '*localPath*' and remote item '*remotePath*' have been updated since the last sync.**
+>
+> Which item would you like to keep?
+
+| Button | Action |
+|---|---|
+| **Cancel** | Closes the dialog; the conflict remains unresolved. |
+| **Local** | Dispatches `RESOLVE_ERROR` — the local copy is kept; the remote copy is overwritten. |
+| **Remote** | Dispatches `RESOLVE_ERROR` — the remote copy is kept; the local copy is overwritten. |
+
+<Warning>
+  There is no undo for conflict resolution. The version you do not select is gone. If you are unsure, click **Cancel** and manually inspect both the local file and the remote file before returning to resolve the conflict.
+</Warning>
+
+---
+
+<CardGroup cols={1}>
+  <Card title="File Exclusions" icon="filter" href="/guides/file-exclusions">
+    Configure glob patterns to prevent specific files or folders from being synced to or from your cloud remote.
+  </Card>
+</CardGroup>

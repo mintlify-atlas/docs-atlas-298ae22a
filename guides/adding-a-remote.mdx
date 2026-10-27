@@ -1,0 +1,75 @@
+---
+title: "Add a Cloud Storage Remote to Alto"
+sidebarTitle: "Adding a Remote"
+description: "Connect a cloud storage account to Alto by entering your credentials. Supports Google Drive, Dropbox, Nextcloud, WebDAV, and more."
+---
+
+A **remote** in Alto is a configured connection to a cloud storage account — the starting point for everything Alto does. Before Alto can sync any local folder, you need at least one remote that tells it which cloud service to talk to and how to authenticate. Once a remote is added, it appears in the sidebar and you can attach any number of sync directory pairs to it.
+
+## What is a remote?
+
+Remotes are Alto's equivalent of Celeste's "server" concept. Each remote stores a user-given name and the provider type (Google Drive, Dropbox, Nextcloud, etc.). OAuth-based providers like Google Drive and Dropbox only need a name because authentication is handled externally; self-hosted or credential-based providers like Nextcloud and WebDAV additionally require a server URL and login credentials.
+
+## Adding a remote
+
+<Steps>
+  <Step title="Open the Login dialog">
+    In the sidebar header, click the **+** button (`list-add-symbolic`, tooltip: "Add Server"). The **Log In** dialog appears as a modal overlay, dimming the rest of the window.
+  </Step>
+
+  <Step title="Choose your provider">
+    Use the **Server Type** dropdown (an `AdwComboRow`) to select your cloud storage provider. The available options are:
+
+    - Google Drive
+    - Dropbox
+    - Nextcloud
+    - OwnCloud
+    - pCloud
+    - Proton Drive
+    - WebDAV
+
+    The form fields below the dropdown update dynamically based on your selection.
+  </Step>
+
+  <Step title="Fill in the required fields">
+    Every provider requires a **Name** — a human-readable label displayed in the sidebar. Providers that run on your own infrastructure also require additional connection details.
+
+    <Note>
+      **Google Drive**, **Dropbox**, and **pCloud** use OAuth for authentication. For these providers, you only need to enter a name — Alto will handle authentication automatically. **Nextcloud**, **OwnCloud**, **WebDAV**, and **Proton Drive** require a server URL, username, and password in addition to the name.
+    </Note>
+
+    The **Name** field has the following validation rules:
+
+    - Must not be empty
+    - Must be unique — no two remotes can share the same name
+    - Must match the following regular expression:
+
+    ```text
+    ^[0-9a-zA-Z_.][0-9a-zA-Z_. -]*[0-9a-zA-Z_.-]$
+    ```
+
+    In plain terms: names must start and end with a letter, number, underscore, or period; the middle characters may also include spaces and hyphens. Names cannot start or end with a space or hyphen.
+
+    If the name is invalid, the entry row displays an error style and a tooltip describing the specific problem. The **Log In** button stays disabled until all validation passes.
+  </Step>
+
+  <Step title="Click Log In">
+    Once all fields are valid, the **Log In** button becomes active. Click it to create the remote. Alto adds the new remote to the sidebar immediately and closes the dialog.
+  </Step>
+</Steps>
+
+## Deleting a remote
+
+To remove a remote and stop all its associated sync directories, select the remote in the sidebar to open its content view, then click the **Delete Remote** button (`user-trash-symbolic`) in the content header. Alto shows a confirmation dialog before proceeding:
+
+> "Are you sure you want to delete this remote? All the directories associated with this remote will also stop syncing."
+
+Confirm with **Yes** to remove the remote, or **No** to cancel. The remote and all its sync directory pairs are removed from the sidebar.
+
+---
+
+<CardGroup cols={1}>
+  <Card title="Sync Directories" icon="folder-sync" href="/guides/sync-directories">
+    Learn how to map a local folder to a remote cloud path and track sync status in real time.
+  </Card>
+</CardGroup>
