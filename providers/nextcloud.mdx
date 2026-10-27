@@ -25,6 +25,29 @@ Before you begin, make sure you have:
   </Step>
   <Step title="Enter a display name">
     Type a display name for this remote in the **Name** field. This name appears in the Alto sidebar and is used to identify the remote throughout the app.
+
+    The name must pass the following validation rules:
+
+    - It cannot be empty.
+    - It cannot duplicate the name of an existing remote.
+    - It must match the allowed character pattern:
+
+    ```text
+    ^[0-9a-zA-Z_.][0-9a-zA-Z_. -]*[0-9a-zA-Z_.-]$
+    ```
+
+    In plain terms, names must:
+    - Only contain numbers, letters, `_`, `-`, `.`, and spaces
+    - Not start with `-` or a space
+    - Not end with a space
+
+    If the name fails validation, the field will be highlighted and a tooltip will display one of the following messages:
+
+    | Situation | Error message |
+    |---|---|
+    | Field is empty | `Name cannot be empty` |
+    | Name already in use | `Name already exists.` |
+    | Invalid characters or format | `Invalid name. Names must:\n- Only contain numbers, letters, '_', '-', '.', and spaces\n- Not start with '-' or a space\n- Not end with a space` |
   </Step>
   <Step title="Enter your server URL">
     Type the full URL of your server in the **Server URL** field. Include the scheme and any path prefix required by your installation.

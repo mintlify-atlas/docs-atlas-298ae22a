@@ -1,19 +1,23 @@
 ---
-title: "Alto: The Best Way to Use Your Cloud Storage"
+title: "Alto: Native GTK4 Desktop Cloud Storage Manager"
 sidebarTitle: "Introduction"
-description: "Alto is a desktop app that unifies Google Drive, Dropbox, Nextcloud, and more in one native GTK4/Adwaita interface built on Electron and React."
+description: "Alto is an Electron desktop app with a native GTK4/Adwaita UI for managing multiple cloud remotes, sync directories, and file exclusions across Linux, macOS, and Windows."
 ---
 
-Alto brings all of your cloud storage into a single, cohesive desktop experience. Built on Electron with a fully native GTK4/Adwaita UI — rendered through the gtk-js component library — Alto looks and feels right at home on modern Linux desktops while remaining cross-platform at its core. Whether you manage a personal Google Drive, a team Nextcloud server, or a mix of half a dozen providers, Alto gives you one consistent place to configure remotes, define sync directories, and track the status of every file in flight.
+Alto brings all of your cloud storage into a single, cohesive desktop experience. Built on Electron with a fully native GTK4/Adwaita UI — rendered through the gtk-js React component library — Alto looks and feels right at home on modern Linux desktops while remaining cross-platform at its core. Whether you manage a personal Google Drive, a team Nextcloud server, or a mix of several providers, Alto gives you one consistent place to configure remotes, define sync directories, and track the status of every file.
+
+<Note>
+  Alto is currently in **active development**. The interface is a fully interactive UI mock — remote management, directory configuration, and status indicators are all wired up in the UI, but the underlying sync backend is not yet implemented. File transfers to cloud providers are not yet functional.
+</Note>
 
 ## Get Started
 
 <CardGroup cols={2}>
   <Card title="Installation" icon="download" href="/installation">
-    Download Alto for Linux, macOS, or Windows, or build it from source.
+    Build Alto from source on Linux, macOS, or Windows using Electron Forge.
   </Card>
   <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Connect your first cloud remote and start syncing in under five minutes.
+    Add your first cloud remote and configure a sync directory in minutes.
   </Card>
   <Card title="Adding a Remote" icon="cloud-plus" href="/guides/adding-a-remote">
     Step-by-step guide for connecting any supported cloud provider.
@@ -25,36 +29,36 @@ Alto brings all of your cloud storage into a single, cohesive desktop experience
 
 ## What is Alto?
 
-Alto is a port of [Celeste](https://github.com/hwittenborn/celeste), the original Rust/GTK4/Libadwaita file sync client, rebuilt for Electron and React. The port targets a full 1-to-1 functional mock of Celeste's UI, driven by the gtk-js React component library that exposes native GTK4 and Adwaita widgets. This combination gives Alto the visual fidelity of a native Linux application while opening the door to macOS and Windows users.
+Alto is a port of [Celeste](https://github.com/hwittenborn/celeste), the original Rust/GTK4/Libadwaita file sync client, rebuilt for Electron and React. The port targets a full 1-to-1 UI replica of Celeste, driven by the gtk-js React component library that exposes native GTK4 and Adwaita widgets. This combination gives Alto the visual fidelity of a native Linux application while supporting macOS and Windows through Electron.
 
-At its heart, Alto is a **multi-remote sync manager**. You register one or more cloud remotes in the sidebar, assign local directories to each remote, and Alto keeps them in sync. Each sync directory has a live status indicator so you can see at a glance whether a directory is fully synced, currently syncing, checking for changes, in an error state, or disconnected.
+At its core, Alto is a **multi-remote sync manager**. You register one or more cloud remotes in the sidebar, assign local directories to each remote, and Alto will keep them in sync once the backend is complete. Each sync directory has a live status indicator so you can see at a glance whether a directory is fully synced, currently syncing, checking for changes, in an error state, or disconnected.
 
 ## Key Features
 
 <CardGroup cols={3}>
-  <Card title="Multi-Remote Management" icon="server">
+  <Card title="Multi-Remote Management" icon="server" href="/guides/adding-a-remote">
     Add and manage multiple cloud remotes simultaneously from a unified sidebar. Each remote gets its own dedicated content panel.
   </Card>
-  <Card title="Sync Directories" icon="folder-sync">
-    Map local folders to remote paths. Alto tracks the sync state of every directory and surfaces it in real time.
+  <Card title="Sync Directories" icon="folder-sync" href="/guides/sync-directories">
+    Map local folders to remote paths. Alto tracks the sync state of every directory and surfaces it in the UI.
   </Card>
-  <Card title="Error & Conflict Resolution" icon="triangle-exclamation">
+  <Card title="Error & Conflict Resolution" icon="triangle-exclamation" href="/guides/managing-errors">
     Alto surfaces sync errors and file conflicts with enough detail to resolve them directly from the app, without digging through logs.
   </Card>
-  <Card title="File Exclusions" icon="filter">
+  <Card title="File Exclusions" icon="filter" href="/guides/file-exclusions">
     Exclude specific files or patterns from a sync directory so Alto only moves the data you actually want synced.
   </Card>
-  <Card title="Native Adwaita UI" icon="paintbrush">
-    Rendered through gtk-js, Alto's interface uses real GTK4 and Adwaita widgets — adaptive layouts, spring-physics animations, and all.
+  <Card title="Native Adwaita UI" icon="paintbrush" href="/contributing/architecture">
+    Rendered through gtk-js, Alto's interface uses real GTK4 and Adwaita widgets — including a frameless shadow-allocated window and an adaptive Leaflet sidebar.
   </Card>
-  <Card title="Cross-Platform" icon="display">
-    Alto ships as a `.deb`, `.rpm`, or `.zip` via Electron Forge, covering Linux, macOS, and Windows from one codebase.
+  <Card title="Typed IPC" icon="code" href="/contributing/ipc-system">
+    The renderer and main process communicate over typed IPC channels, keeping the GTK4 UI layer cleanly decoupled from Electron's native APIs.
   </Card>
 </CardGroup>
 
 ## Supported Providers
 
-Alto supports a broad range of cloud storage providers out of the box. The login dialog lets you pick your provider, enter the required credentials, and have a new remote ready in seconds.
+Alto is designed to support a broad range of cloud storage providers. The login dialog lets you pick your provider, enter the required credentials, and have a new remote ready in seconds.
 
 | Provider | Auth Method | Notes |
 |---|---|---|
@@ -66,11 +70,15 @@ Alto supports a broad range of cloud storage providers out of the box. The login
 | Proton Drive | Username & Password | Supports optional TOTP |
 | WebDAV | Username & Password | Requires server URL |
 
+<Note>
+  The login dialog currently supports **Google Drive** only. Support for the remaining providers listed above is planned for upcoming development iterations.
+</Note>
+
 ## Architecture
 
-Alto's renderer process is a React application that communicates with the Electron main process over typed IPC channels (modeled after GitHub Desktop's channel pattern). Window management operations — close, minimize, toggle maximized, set decoration insets — are all handled through these typed channels, keeping the GTK4 UI layer cleanly decoupled from Electron's native APIs.
+Alto's renderer process is a React application that communicates with the Electron main process over typed IPC channels. Window management operations — close, minimize, toggle maximized, and set decoration insets — are all handled through these typed channels, keeping the GTK4 UI layer cleanly decoupled from Electron's native APIs. For more detail, see the [IPC System](/contributing/ipc-system) and [Architecture](/contributing/architecture) guides.
 
-The build pipeline uses Electron Forge with a Vite plugin, packaging the app as an ASAR archive with hardened Electron Fuses enabled at package time (cookie encryption on, Node.js CLI inspect disabled, ASAR integrity validation on).
+The build pipeline uses Electron Forge with a Vite plugin, packaging the app as an ASAR archive with hardened Electron Fuses enabled at package time — cookie encryption on, `RunAsNode` disabled, Node.js CLI inspect flags blocked, and embedded ASAR integrity validation enforced.
 
 ## License
 

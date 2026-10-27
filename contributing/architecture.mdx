@@ -12,7 +12,7 @@ Alto is structured as three cooperating layers: an Electron main process that ow
 
 ## Three-Layer Overview
 
-```
+```text
 ┌─────────────────────────────────────────────────┐
 │  Electron Main Process  (src/main.ts)            │
 │  – BrowserWindow, window state, IPC handlers    │
@@ -176,7 +176,7 @@ gtk-js is a React component library that replicates GTK4 and libadwaita widgets 
 | Package | Role |
 |---|---|
 | `@gtk-js/gtk4` | Low-level GTK4 widget wrappers (`GtkLabel`, `GtkWindow`, `GtkSeparator`, etc.) |
-| `@gtk-js/adwaita` | Adwaita/libadwaita components (`AdwHeaderBar`, `AdwWindowTitle`, `AdwLeaflet`, etc.) |
+| `@gtk-js/adwaita` | Adwaita/libadwaita components (`AdwHeaderBar`, `GtkWindowTitle`, `AdwLeaflet`, etc.) |
 | `@gtk-js/theme-adwaita` | CSS theme that makes components visually match GNOME's Adwaita style |
 | `@gtk-js/icons-adwaita` | Adwaita icon set |
 | `@gtk-js/icons-gtk4` | GTK4 icon set |
@@ -270,7 +270,7 @@ Electron Forge's `FusesPlugin` is used at package time to lock down security-sen
 
 ## Source File Map
 
-```
+```text
 src/
 ├── main.ts          # Electron main process — BrowserWindow, IPC handlers
 ├── preload.ts       # Context bridge — exposes window.electronAPI

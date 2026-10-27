@@ -1,7 +1,7 @@
 ---
-title: "Add a Cloud Storage Remote to Alto"
+title: "Add a Cloud Storage Remote to Alto — Step-by-Step Guide"
 sidebarTitle: "Adding a Remote"
-description: "Connect a cloud storage account to Alto by entering your credentials. Supports Google Drive, Dropbox, Nextcloud, WebDAV, and more."
+description: "Connect a cloud storage account to Alto. Choose your provider, enter a valid name, and supply credentials. Covers OAuth and self-hosted providers."
 ---
 
 A **remote** in Alto is a configured connection to a cloud storage account — the starting point for everything Alto does. Before Alto can sync any local folder, you need at least one remote that tells it which cloud service to talk to and how to authenticate. Once a remote is added, it appears in the sidebar and you can attach any number of sync directory pairs to it.
@@ -35,7 +35,7 @@ Remotes are Alto's equivalent of Celeste's "server" concept. Each remote stores 
     Every provider requires a **Name** — a human-readable label displayed in the sidebar. Providers that run on your own infrastructure also require additional connection details.
 
     <Note>
-      **Google Drive**, **Dropbox**, and **pCloud** use OAuth for authentication. For these providers, you only need to enter a name — Alto will handle authentication automatically. **Nextcloud**, **OwnCloud**, **WebDAV**, and **Proton Drive** require a server URL, username, and password in addition to the name.
+      **Google Drive**, **Dropbox**, and **pCloud** use OAuth for authentication — you only need to enter a name and Alto handles authentication automatically. **Nextcloud**, **OwnCloud**, and **WebDAV** require a server URL, username, and password in addition to the name. **Proton Drive** requires a username and password (and optionally a TOTP code for two-factor authentication), but no server URL.
     </Note>
 
     The **Name** field has the following validation rules:

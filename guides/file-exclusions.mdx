@@ -1,7 +1,7 @@
 ---
-title: "Exclude Files and Folders from Syncing"
+title: "Exclude Files from Syncing in Alto with Glob Patterns"
 sidebarTitle: "File Exclusions"
-description: "Configure glob patterns in Alto to prevent specific files or folders from being synced to or from your cloud remote."
+description: "Configure per-directory glob patterns in Alto to skip files during sync. Validated with Minimatch; managed per sync pair in the detail view."
 ---
 
 File exclusions let you tell Alto to ignore specific files or folders when syncing a directory pair. Instead of syncing everything in a local folder, you can define glob patterns — for example `*.log` or `node_modules/**` — and Alto will skip any path that matches. Exclusion patterns are configured per sync directory from the detail view, so each sync pair can have its own independent set of rules.
@@ -9,6 +9,8 @@ File exclusions let you tell Alto to ignore specific files or folders when synci
 ## How exclusions work
 
 Exclusions are stored as a list of glob patterns on each sync directory (in Celeste, these are written to `.sync-exclude.lst` files; Alto manages them in the detail view UI). When Alto evaluates whether to transfer a file, it checks the file path against every pattern in the list. Any file or folder whose path matches is skipped on both sides of the sync.
+
+Alto validates each pattern using [Minimatch](https://github.com/isaacs/minimatch) before saving it. If the pattern is not a valid glob, the entry row displays an error style and the apply button will not persist the change until the pattern is corrected.
 
 <Note>
   Exclusion patterns apply to **both local and remote paths**. A pattern that matches a file locally will also prevent Alto from syncing or touching the corresponding remote file, and vice versa.

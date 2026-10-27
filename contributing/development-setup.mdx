@@ -14,11 +14,13 @@ Before you begin, make sure the following tools are installed:
 - **Bun** — used exclusively to install and build the gtk-js monorepo (gtk-js uses Bun as its build tool)
 - **Git** — for cloning both repositories
 
+Alto's key dependency versions (from `package.json`): **Electron 41.5.0**, **TypeScript ~4.5.4**.
+
 ## Directory Layout
 
 Alto expects gtk-js to be checked out at a specific path relative to the Alto repository. The two repos must sit side by side under a shared parent:
 
-```
+```text
 parent-directory/
 ├── gtk-js/
 │   └── gtk-js/          ← gtk-js monorepo (cloned here)

@@ -1,45 +1,46 @@
 ---
-title: "Get Started with Alto"
+title: "Alto Quickstart: Add Your First Cloud Remote"
 sidebarTitle: "Quickstart"
-description: "Set up Alto for the first time, connect your first cloud storage remote, and configure a sync directory to start syncing in minutes."
+description: "Launch Alto for the first time, add a cloud storage remote via the login dialog, configure a sync directory, and understand the live status indicators."
 ---
 
-From first launch to an actively syncing remote, Alto is designed to get out of your way as quickly as possible. This guide walks you through every step of the initial setup — opening the app, adding a cloud remote, configuring a sync directory, and understanding the live status indicators that tell you what Alto is doing at any moment.
+From first launch to a configured remote, Alto is designed to get you set up quickly. This guide walks you through every step of the initial setup — opening the app, adding a cloud remote, configuring a sync directory, and understanding the live status indicators that tell you what Alto is doing at any moment.
 
 <Note>
-  Alto is currently in **active development**. The UI is a fully interactive functional mock with planned sync backend integration. All remote management, directory configuration, and status indicators work in the interface, but actual file synchronisation to cloud providers is not yet wired up.
+  Alto is currently in **active development**. The UI is a fully interactive mock — remote management, directory configuration, and status indicators all work in the interface, but actual file synchronisation to cloud providers is not yet wired up. The steps below reflect the current UI mock.
 </Note>
 
 ## First-Run Setup
 
 <Steps>
   <Step title="Launch Alto">
-    Open Alto from your application launcher or, if you built from source, with `npm start` from the project directory. The main window opens with two panels side by side:
+    Open Alto from your application launcher or, if you built from source, run `npm start` from the project directory. The main window opens with the Alto header bar and an empty remote list in the sidebar.
 
-    - **Sidebar (left)** — Lists all configured cloud remotes. Starts empty on first run. The header bar shows an **Add Server** button (`+`) on the left and a menu button on the right.
-    - **Content area (right)** — Shows the sync directories and status for whichever remote is selected in the sidebar.
-
-    On narrow screens or small windows, the layout folds into a single panel and you can navigate between the sidebar and content area using the navigation arrows.
+    The window uses a frameless, shadow-allocated layout rendered by gtk-js. On first run the sidebar is empty — no remotes have been added yet.
   </Step>
 
   <Step title="Add your first cloud remote">
     Click the **+** (Add Server) button in the sidebar header bar. This opens the **Log In** dialog as a modal overlay.
 
     In the dialog:
-    1. Use the **Server Type** dropdown to pick your cloud provider (e.g. Google Drive, Dropbox, Nextcloud).
-    2. Fill in the fields that appear for your chosen provider. Google Drive, Dropbox, and pCloud only ask for a **Name**; Nextcloud, OwnCloud, and WebDAV also ask for a **Server URL**, username, and password; Proton Drive asks for username, password, and an optional TOTP code.
+    1. Use the **Server Type** dropdown to select your cloud provider.
+    2. Fill in the **Name** field for your remote. This is the display name Alto uses to identify the remote in the sidebar.
     3. Your remote name must be unique, must not be empty, and may only contain letters, numbers, underscores, hyphens, periods, and spaces. It cannot start with a hyphen or space, and cannot end with a space.
     4. Click **Log In**. The button remains disabled until all validation passes.
 
     Once confirmed, your new remote appears in the sidebar list.
 
-    For a detailed walkthrough of every provider's login flow, see the [Adding a Remote](/guides/adding-a-remote) guide.
+    <Note>
+      The login dialog currently supports **Google Drive** only. Support for Dropbox, Nextcloud, OwnCloud, pCloud, Proton Drive, and WebDAV is planned. For full details on each provider's expected fields and auth method, see the [Providers Overview](/providers/overview).
+    </Note>
+
+    For a detailed walkthrough of the login flow, see the [Adding a Remote](/guides/adding-a-remote) guide.
   </Step>
 
   <Step title="Add a sync directory">
     Select your new remote in the sidebar to open its content panel. The panel shows a list of configured sync directories — empty to start.
 
-    Click **Add Directory** (or the equivalent action in the content header bar) to configure your first sync:
+    Click **Add Directory** in the content header bar to configure your first sync:
 
     1. **Local path** — Choose the local folder to sync. Alto uses Electron's native file chooser dialog.
     2. **Remote path** — Set the corresponding path on the cloud remote.
@@ -56,17 +57,17 @@ From first launch to an actively syncing remote, Alto is designed to get out of 
     | **Synced** | The local directory matches the remote — no action needed. |
     | **Checking** | Alto is comparing local and remote file trees to detect changes. |
     | **Syncing** | A sync operation is in progress; files are being transferred. |
-    | **Error** | One or more files could not be synced. See step 5. |
+    | **Error** | One or more files could not be synced. See the next step. |
     | **Disconnected** | Alto cannot reach the remote (network issue or credential problem). |
 
-    The status updates automatically. You do not need to refresh the view.
+    The status updates automatically — you do not need to refresh the view.
   </Step>
 
   <Step title="Resolve any errors">
     If a directory enters the **Error** state, click on the directory row to drill into the detail view. The detail view shows a breakdown of the individual files that failed, along with the reason for each failure. From here you can:
 
     - Review the error message and decide how to handle the conflict.
-    - Remove a file exclusion or add a new one to work around persistent issues.
+    - Add or remove a file exclusion to work around persistent issues.
     - Dismiss resolved errors once you have addressed the underlying problem.
 
     For a full guide to the error and conflict resolution workflow, see [Managing Errors](/guides/managing-errors).
@@ -81,5 +82,11 @@ From first launch to an actively syncing remote, Alto is designed to get out of 
   </Card>
   <Card title="Sync Directories" icon="folder-sync" href="/guides/sync-directories">
     Configure local-to-remote directory mappings, set up file exclusions, and manage multiple directories per remote.
+  </Card>
+  <Card title="Managing Errors" icon="triangle-exclamation" href="/guides/managing-errors">
+    Understand sync error states, resolve file conflicts, and use exclusion patterns to keep your directories clean.
+  </Card>
+  <Card title="Providers Overview" icon="grid-2" href="/providers/overview">
+    Browse all supported cloud providers and the credentials each one requires.
   </Card>
 </CardGroup>
